@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cjctmm"
+# The version is read from src/cjctmm/__init__.py (__version__), its only source.
+dynamic = ["version"]
+description = "Transfer-matrix method for multilayer optics: arrays in, reflection and transmission out."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "C.J.C. Scheper" }]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+# Only for the scripts in examples/, pinned to a cjcplot release tag; the package never imports cjcplot.
+examples = ["cjcplot @ git+https://github.com/cjcscheper/cjcplot.git@v0.2.0"]
+
+[tool.setuptools.dynamic]
+version = { attr = "cjctmm.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

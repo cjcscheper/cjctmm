@@ -1,0 +1,7 @@
+# Dependencies of cjctmm, the same as [project] dependencies in pyproject.toml
+# (tests/test_requirements.py checks that they match).
+# Install with: pip install -r requirements.txt
+# For the tests also install pytest. For the scripts in examples/ also install
+# cjcplot, pinned in pyproject.toml's `examples` extra:
+#   pip install "cjcplot @ git+https://github.com/cjcscheper/cjcplot.git@v0.2.0"
+numpy
