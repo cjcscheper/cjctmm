@@ -69,16 +69,14 @@ def test_absorbing_stack_has_non_negative_absorptance():
 
 
 def test_normal_incidence_s_and_p_agree():
-    """At normal incidence s and p are the same wave: equal R, T, A and t, and r_p = -r_s."""
+    """At normal incidence s and p are the same wave: equal r, t, R, T and A."""
     omega = np.linspace(0.5, 2.0, 20) * OMEGA[0]
     thickness = [NAN, 30e-9, 200e-9, NAN]
     n = [1.0, 0.2 + 3.0j, 2.0 + 0.1j, N_GLASS]
     s = solve_tmm(omega, thickness, n, polarization="s")
     p = solve_tmm(omega, thickness, n, polarization="p")
-    for name in ("R", "T", "A", "t"):
+    for name in ("r", "t", "R", "T", "A"):
         assert np.allclose(getattr(s, name), getattr(p, name), rtol=1e-14, atol=0)
-    # The textbook p convention points the reflected E reference opposite to s at normal incidence.
-    assert np.allclose(p.r, -s.r, rtol=1e-14, atol=0)
 
 
 @pytest.mark.parametrize("polarization", POLARIZATIONS)

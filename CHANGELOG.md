@@ -5,6 +5,21 @@ fixes, minor for new features, major for changes that break existing scripts.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-20
+
+### Changed
+- **Breaking:** the sign convention of `r_p`. `solve_tmm(..., polarization="p").r`
+  and `fresnel_r(..., "p")` now return `r_p = (n1 cos2 - n2 cos1)/(n1 cos2 + n2 cos1)`,
+  so `r_p = r_s` at normal incidence (air to glass: -0.2 instead of +0.2) and
+  `r_p -> +1` at grazing incidence. This is the opposite sign of Hecht / Born &
+  Wolf; multiply by -1 to get the old values. `t`, `R`, `T` and `A` are unchanged.
+  THEORY.md describes both conventions and why neither looks symmetric at both
+  normal and grazing incidence.
+
+### Fixed
+- THEORY.md formulas render correctly on GitHub: they use GitHub's protected
+  math syntax, so Markdown no longer eats underscores and backslashes.
+
 ## [0.1.0] - 2026-10-20
 
 First release.

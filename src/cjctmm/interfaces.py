@@ -16,12 +16,13 @@ Conventions (see THEORY.md for the derivation):
   electric field lies in the plane of incidence.
 - ``r`` and ``t`` are complex amplitude ratios of the electric field;
   ``R`` and ``T`` are power fractions.
-- p sign convention as in Hecht, Born & Wolf and Wikipedia: the magnetic
-  fields of the incident, reflected and transmitted waves all point along
-  the same direction (normal to the plane of incidence), and each electric
-  field follows from ``E = Z * H x k_hat``. Then
-  ``r_p = (n2 cos1 - n1 cos2) / (n2 cos1 + n1 cos2)``, which is ``+0.2`` for
-  air to glass (n = 1.5) at normal incidence while ``r_s = -0.2``.
+- p sign convention: the reference directions of the incident, reflected and
+  transmitted electric fields all have their component along the interface
+  pointing the same way. Then
+  ``r_p = (n1 cos2 - n2 cos1) / (n1 cos2 + n2 cos1)``, and at normal
+  incidence, where s and p are the same wave, ``r_p = r_s`` (``-0.2`` for air
+  to glass, n = 1.5). Hecht, Born & Wolf and Wikipedia use the opposite sign
+  of ``r_p``; ``t_p`` is the same in both. THEORY.md compares the two.
 
 Angles are in radians.
 """
@@ -291,27 +292,13 @@ def _tangential_t(
     return 2.0 * eta_1 / (eta_1 + eta_2)
 
 
-def _r_from_tangential(
-    r_tangential: npt.NDArray[np.complex128],
-    polarization: Polarization,
-) -> npt.NDArray[np.complex128]:
-    """Convert a tangential-E reflection ratio to the textbook r_s or r_p."""
-    # For s the whole E field is tangential. For p, with H of both waves along
-    # the same direction, the tangential parts of the incident and reflected E
-    # point in opposite directions (E = Z*H x k_hat and k_z flips sign), so
-    # r_p = -r_tangential.
-    if polarization == "s":
-        return r_tangential
-    return -r_tangential
-
-
 def _t_from_tangential(
     t_tangential: npt.NDArray[np.complex128],
     cos_theta_inc: npt.NDArray[np.complex128],
     cos_theta_exit: npt.NDArray[np.complex128],
     polarization: Polarization,
 ) -> npt.NDArray[np.complex128]:
-    """Convert a tangential-E transmission ratio to the textbook t_s or t_p."""
+    """Convert a tangential-E transmission ratio to the full-field t_s or t_p."""
     # For p the tangential part of E is E*cos(theta) in each medium, so the full
     # field ratio is t_tangential * cos(theta_inc) / cos(theta_exit).
     if polarization == "s":
@@ -342,23 +329,25 @@ def fresnel_r(
     -------
     numpy.ndarray of complex
         ``r_s = (n1 cos1 - n2 cos2)/(n1 cos1 + n2 cos2)`` or
-        ``r_p = (n2 cos1 - n1 cos2)/(n2 cos1 + n1 cos2)`` (Hecht convention, see
-        the module docstring).
+        ``r_p = (n1 cos2 - n2 cos1)/(n1 cos2 + n2 cos1)``; equal at normal
+        incidence (see the module docstring).
 
     Notes
     -----
-    Written in admittances, ``r = (eta_1 - eta_2)/(eta_1 + eta_2)`` for the
-    tangential E field, which is exactly r_s. For p that tangential ratio is
-    ``-r_p`` (see ``_r_from_tangential``). For the opposite p sign convention
-    use ``-fresnel_r(..., polarization="p")``.
+    Written in admittances, ``r = (eta_1 - eta_2)/(eta_1 + eta_2)``, the ratio
+    of the tangential electric fields. That is r for both polarizations:
+    incident and reflected wave travel in the same medium at the same angle,
+    so the factor ``cos(theta_1)`` between full and tangential field cancels,
+    and in this convention their tangential reference directions coincide.
+    For the Hecht / Born & Wolf convention use ``-fresnel_r(..., polarization="p")``.
     """
 
     # Admittances on both sides, from Snell's law (the incident side reproduces cos(theta_inc)).
     eta_1 = admittance(n_1, snell_cos_theta(n_1, n_1, theta_inc), polarization)
     eta_2 = admittance(n_2, snell_cos_theta(n_1, n_2, theta_inc), polarization)
 
-    # The tangential ratio from admittances, converted to the textbook coefficient.
-    return _r_from_tangential(_tangential_r(eta_1, eta_2), polarization)
+    # The tangential ratio is r itself for both polarizations, see Notes.
+    return _tangential_r(eta_1, eta_2)
 
 
 def fresnel_t(

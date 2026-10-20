@@ -88,9 +88,9 @@ def test_admittance_at_normal_incidence_is_n_over_z0():
 
 
 def test_fresnel_air_to_glass_at_normal_incidence():
-    """Air to glass at normal incidence: r_s = -0.2, r_p = +0.2, t = 0.8, R = 0.04, T = 0.96."""
+    """Air to glass at normal incidence: r_s = r_p = -0.2, t = 0.8, R = 0.04, T = 0.96."""
     assert np.isclose(fresnel_r(1.0, N_GLASS, 0.0, "s"), -0.2)
-    assert np.isclose(fresnel_r(1.0, N_GLASS, 0.0, "p"), +0.2)
+    assert np.isclose(fresnel_r(1.0, N_GLASS, 0.0, "p"), -0.2)
     for polarization in POLARIZATIONS:
         assert np.isclose(fresnel_t(1.0, N_GLASS, 0.0, polarization), 0.8)
         assert np.isclose(fresnel_R(1.0, N_GLASS, 0.0, polarization), 0.04)
@@ -98,30 +98,30 @@ def test_fresnel_air_to_glass_at_normal_incidence():
 
 
 def test_fresnel_at_grazing_incidence():
-    """Towards grazing incidence both r_s and r_p go to -1 (total reflection, phase flip)."""
+    """Towards grazing incidence r_s goes to -1 and r_p to +1 (total reflection; opposite signs in this convention)."""
     theta = np.pi / 2 - 1e-7
     assert np.isclose(fresnel_r(1.0, N_GLASS, theta, "s"), -1.0, atol=1e-6)
-    assert np.isclose(fresnel_r(1.0, N_GLASS, theta, "p"), -1.0, atol=1e-6)
+    assert np.isclose(fresnel_r(1.0, N_GLASS, theta, "p"), +1.0, atol=1e-6)
 
 
 def test_brewster_angle_zeroes_r_p_and_flips_its_sign():
-    """At arctan(1.5) = 56.31 deg r_p = 0; below it r_p > 0, above it r_p < 0."""
+    """At arctan(1.5) = 56.31 deg r_p = 0; below it r_p < 0 (like r_s), above it r_p > 0."""
     theta_b = brewster_angle(1.0, N_GLASS)
     assert np.isclose(np.degrees(theta_b), 56.31, atol=0.005)
     assert abs(fresnel_r(1.0, N_GLASS, theta_b, "p")) < 1e-15
-    assert fresnel_r(1.0, N_GLASS, theta_b - 0.01, "p").real > 0.0
-    assert fresnel_r(1.0, N_GLASS, theta_b + 0.01, "p").real < 0.0
+    assert fresnel_r(1.0, N_GLASS, theta_b - 0.01, "p").real < 0.0
+    assert fresnel_r(1.0, N_GLASS, theta_b + 0.01, "p").real > 0.0
     # r_s does not vanish there.
     assert fresnel_R(1.0, N_GLASS, theta_b, "s") > 0.1
 
 
-def test_fresnel_textbook_closed_forms():
-    """r and t equal the textbook (Hecht) formulas in n and cos(theta) at oblique incidence."""
+def test_fresnel_closed_forms():
+    """r and t equal the closed-form formulas in n and cos(theta) at oblique incidence."""
     n_1, n_2, theta = 1.0, N_GLASS, np.radians(40.0)
     cos_1 = np.cos(theta)
     cos_2 = np.sqrt(1.0 - (n_1 * np.sin(theta) / n_2) ** 2)
     assert np.isclose(fresnel_r(n_1, n_2, theta, "s"), (n_1 * cos_1 - n_2 * cos_2) / (n_1 * cos_1 + n_2 * cos_2))
-    assert np.isclose(fresnel_r(n_1, n_2, theta, "p"), (n_2 * cos_1 - n_1 * cos_2) / (n_2 * cos_1 + n_1 * cos_2))
+    assert np.isclose(fresnel_r(n_1, n_2, theta, "p"), (n_1 * cos_2 - n_2 * cos_1) / (n_1 * cos_2 + n_2 * cos_1))
     assert np.isclose(fresnel_t(n_1, n_2, theta, "s"), 2 * n_1 * cos_1 / (n_1 * cos_1 + n_2 * cos_2))
     assert np.isclose(fresnel_t(n_1, n_2, theta, "p"), 2 * n_1 * cos_1 / (n_2 * cos_1 + n_1 * cos_2))
 
@@ -153,9 +153,11 @@ def boundary_condition_coefficients(n_1, n_2, theta_inc, polarization):
     Plane of incidence xz, interface z = 0, medium 1 at z < 0, y normal to the
     plane of incidence. Each wave has a direction k_hat (complex in an absorbing
     medium, with k_hat . k_hat = 1) and fields related by H = k_hat x E / Z and
-    E = Z H x k_hat, with Z = Z0/n. For p, H of all three waves points along +y;
-    for s, E does. r and t are ratios of the electric-field amplitudes along
-    these reference directions.
+    E = Z H x k_hat, with Z = Z0/n. For s, E of all three waves points along +y.
+    For p, H points along +y for the incident and transmitted waves and along -y
+    for the reflected wave, so that the parts of all three E fields along the
+    interface (x) point along +x. r and t are ratios of the electric-field
+    amplitudes along these reference directions.
     """
     # Snell's law and the decaying branch, written out independently of the package.
     sin_1, cos_1 = np.sin(theta_inc), np.cos(theta_inc)
@@ -171,20 +173,21 @@ def boundary_condition_coefficients(n_1, n_2, theta_inc, polarization):
     y_hat = np.array([0.0, 1.0, 0.0], dtype=complex)
     z_1, z_2 = VACUUM_IMPEDANCE / n_1, VACUUM_IMPEDANCE / n_2
 
-    def fields(k_hat, z):
+    def fields(k_hat, z, h_sign):
         """E and H of a wave with unit electric-field amplitude along its reference direction."""
         if polarization == "p":
-            h = y_hat / z  # |E| = Z |H| = 1
+            h = h_sign * y_hat / z  # |E| = Z |H| = 1
             return z * np.cross(h, k_hat), h
         e = y_hat
         return e, np.cross(k_hat, e) / z
 
     # Tangential components (x, y) of E and H for each wave.
-    def tangential(k_hat, z):
-        e, h = fields(k_hat, z)
+    def tangential(k_hat, z, h_sign=1.0):
+        e, h = fields(k_hat, z, h_sign)
         return np.array([e[0], e[1], h[0], h[1]])
 
-    inc, ref, tra = tangential(k_inc, z_1), tangential(k_ref, z_1), tangential(k_tra, z_2)
+    # The reflected p wave has H along -y, which puts its E reference along +x at the interface.
+    inc, ref, tra = tangential(k_inc, z_1), tangential(k_ref, z_1, h_sign=-1.0), tangential(k_tra, z_2)
 
     # Continuity: inc + r*ref = t*tra. Only two of the four rows are non-trivial:
     # (E_x, H_y) for p and (E_y, H_x) for s; the other two read 0 = 0.
@@ -208,7 +211,9 @@ def test_fresnel_matches_boundary_conditions(polarization: Polarization, n_1, n_
 
 
 def test_boundary_condition_construction_pins_r_p_sign():
-    """The from-scratch construction itself gives r_p = +0.2 for air to glass at normal incidence."""
+    """The from-scratch construction itself gives r_p = r_s = -0.2 for air to glass at normal incidence."""
     # Guards the test helper: if its field directions changed, this would catch it.
     r_p, t_p = boundary_condition_coefficients(1.0, N_GLASS, 0.0, "p")
-    assert np.isclose(r_p, 0.2) and np.isclose(t_p, 0.8)
+    assert np.isclose(r_p, -0.2) and np.isclose(t_p, 0.8)
+    # The reflected E reference has its x part along +x, as for the incident wave.
+    assert np.isclose(boundary_condition_coefficients(1.0, N_GLASS, 0.0, "s")[0], r_p)

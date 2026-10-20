@@ -31,7 +31,7 @@ To pin a fixed version, so a script keeps giving the same numbers later on
 [changelog](CHANGELOG.md)):
 
 ```bash
-pip install git+https://github.com/cjcscheper/cjctmm.git@v0.1.0
+pip install git+https://github.com/cjcscheper/cjctmm.git@v0.2.0
 ```
 
 For development, clone the repository and install it editable:
@@ -95,14 +95,15 @@ and `A = 1 − R − T`, each of shape `(M,)`. `R` and `T` are power fractions;
 - **Time dependence `exp(−iωt)`**, so `n = n' + iκ` with κ > 0 for absorption.
   For the other convention (`n' − iκ`), conjugate your indices before passing
   them and use `conjugate_model=True` to get `r` and `t` back in that convention.
-- **p sign as in Hecht, Born & Wolf and Wikipedia**:
-  `r_p = (n₂cosθ₁ − n₁cosθ₂)/(n₂cosθ₁ + n₁cosθ₂)`. For air to glass (n = 1.5)
-  at normal incidence `r_s = −0.2` and `r_p = +0.2`: the same physical wave,
-  measured against opposite reference directions. For the other p convention
-  use `-result.r`. `R`, `T` and `A` do not depend on these choices.
+- **p sign with `r_p = r_s` at normal incidence**, where s and p are the same
+  wave: `r_p = (n₁cosθ₂ − n₂cosθ₁)/(n₁cosθ₂ + n₂cosθ₁)`. For air to glass
+  (n = 1.5) at normal incidence `r_s = r_p = −0.2`; towards grazing incidence
+  `r_s → −1` and `r_p → +1`. Hecht, Born & Wolf and Wikipedia use the opposite
+  sign of `r_p` (`+0.2` at normal incidence); get it with `-result.r`. `t`,
+  `R`, `T` and `A` do not depend on this choice.
 
-THEORY.md explains both and how the sign was pinned from Maxwell's boundary
-conditions.
+THEORY.md compares both conventions and explains how the sign was pinned from
+Maxwell's boundary conditions.
 
 ## Single interfaces
 
@@ -110,7 +111,7 @@ conditions.
 from cjctmm import fresnel_r, fresnel_t, fresnel_R, fresnel_T, brewster_angle, critical_angle
 
 fresnel_r(1.0, 1.5, 0.0, "s")         # -0.2
-fresnel_r(1.0, 1.5, 0.0, "p")         # +0.2
+fresnel_r(1.0, 1.5, 0.0, "p")         # -0.2 (equal to r_s at normal incidence)
 brewster_angle(1.0, 1.5)              # 0.9828 rad = 56.31 deg, r_p = 0 there
 critical_angle(1.5, 1.0)              # 0.7297 rad = 41.81 deg
 ```

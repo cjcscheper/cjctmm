@@ -55,7 +55,7 @@ THEORY.md               derivation, conventions, substrate-pass validity
 ## Physics rules
 
 - **One place per piece of physics.** Admittances, Snell's law, the
-  interface coefficients and the tangential-to-textbook conversion live in
+  interface coefficients and the tangential-to-full-field conversion live in
   `interfaces.py`; `tmm.py` reuses them. The phase thickness is computed only
   by `propagation_phase`. Do not write a second inline copy of a formula.
 - **Characteristic-matrix (admittance) formulation** with the vectorised
@@ -63,9 +63,9 @@ THEORY.md               derivation, conventions, substrate-pass validity
   matrices: those contain `exp(-i delta)` and overflow sooner in lossy layers.
   Keep the documented clamp `|Im delta| <= MAX_IMAG_PHASE`.
 - **Conventions are fixed:** time dependence `exp(-i omega t)`, `n = n' + i kappa`
-  with `kappa > 0` absorbing; p sign as in Hecht / Born & Wolf
-  (`r_p = +0.2` air to glass at normal incidence). There is no switch for the
-  p sign. `test_fresnel_matches_boundary_conditions` pins it from Maxwell's
+  with `kappa > 0` absorbing; p sign with `r_p = r_s` at normal incidence
+  (`r_p = -0.2` air to glass), the opposite of Hecht / Born & Wolf (THEORY.md
+  compares both). There is no switch for the p sign. `test_fresnel_matches_boundary_conditions` pins it from Maxwell's
   boundary conditions; never change that test to match code.
 - **Snell's law** uses the incident medium's invariant `n_0 sin(theta_0)` in
   every layer and returns `cos(theta)` directly, on the decaying branch,

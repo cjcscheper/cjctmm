@@ -28,7 +28,7 @@ from cjctmm.interfaces import (
 )
 from cjctmm.tmm import MAX_IMAG_PHASE, Result, propagation_phase, solve_tmm
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "MAX_IMAG_PHASE",

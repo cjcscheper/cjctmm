@@ -43,9 +43,9 @@ ch. 2); Hecht (*Optics*, ch. 4 and 9) covers the Fresnel and thin-film basics.
        r_tan = (eta_inc B - C) / (eta_inc B + C)
        t_tan = 2 eta_inc / (eta_inc B + C)
 
-   For s these are the textbook ``r_s`` and ``t_s``. For p they are converted
-   to the textbook (Hecht / Born & Wolf) convention: ``r_p = -r_tan`` and
-   ``t_p = t_tan cos(theta_inc)/cos(theta_exit)``, see THEORY.md.
+   For s these are ``r_s`` and ``t_s``. For p, ``r_p = r_tan`` in the
+   convention used here (equal to ``r_s`` at normal incidence), and the full
+   field ratio is ``t_p = t_tan cos(theta_inc)/cos(theta_exit)``, see THEORY.md.
 
 5. **Power.** The time-averaged power flow normal to the layers of one wave
    is ``Re(eta) |E_tan|^2 / 2``. Hence ``R = |r|^2``,
@@ -70,7 +70,6 @@ from cjctmm.interfaces import (
     ComplexArrayLike,
     Polarization,
     _check_polarization,
-    _r_from_tangential,
     _t_from_tangential,
     _tangential_r,
     _tangential_t,
@@ -97,7 +96,8 @@ class Result:
         Angular frequency [rad/s], shape ``(M,)``, as passed to :func:`solve_tmm`.
     r:
         Complex amplitude reflection coefficient, reflected over incident electric
-        field in the incident medium, shape ``(M,)``. Textbook (Hecht) convention for p.
+        field in the incident medium, shape ``(M,)``. For p, the convention with
+        ``r_p = r_s`` at normal incidence (see THEORY.md).
     t:
         Complex amplitude transmission coefficient, transmitted electric field in
         the exit medium over incident electric field, shape ``(M,)``.
@@ -453,9 +453,10 @@ def solve_tmm(
     -------
     Result
         Frozen dataclass with ``omega, r, t, R, T, A``, each of shape ``(M,)``.
-        For p, ``r`` and ``t`` follow the textbook convention
-        ``r_p = (n2 cos1 - n1 cos2)/(n2 cos1 + n1 cos2)`` for a single
-        interface; use ``-result.r`` for the opposite sign convention.
+        For p, ``r`` follows the convention
+        ``r_p = (n1 cos2 - n2 cos1)/(n1 cos2 + n2 cos1)`` for a single
+        interface, equal to ``r_s`` at normal incidence; use ``-result.r`` for
+        the Hecht / Born & Wolf convention.
 
     Raises
     ------
@@ -547,8 +548,8 @@ def solve_tmm(
     T = np.real(eta_exit) / np.real(eta_inc) * np.abs(t_tan) ** 2
     A = 1.0 - R - T
 
-    # Tangential-field ratios to the textbook r and t (only p changes).
-    r = _r_from_tangential(r_tan, polarization)
+    # r is the tangential ratio itself; t_p needs the cos(theta) factors of the full field.
+    r = r_tan
     t = _t_from_tangential(t_tan, cos_theta[:, 0], cos_theta[:, -1], polarization)
 
     # The opposite time convention is the complex conjugate.
