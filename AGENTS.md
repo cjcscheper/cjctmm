@@ -17,7 +17,6 @@ deliberately live elsewhere (a separate materials package imports cjctmm).
 ## Commands
 
 ```bash
-pip install -r requirements.txt         # dependencies only (venv / PyCharm interpreter)
 pip install -e ".[test]"                         # editable install with pytest
 pytest                                           # run all tests
 pip install -e ".[examples]"                     # cjcplot, pinned, for the examples
@@ -49,9 +48,7 @@ tests/
   test_interfaces.py    Snell, Fresnel values, p sign pinned from boundary conditions
   test_tmm_analytic.py  solve_tmm against analytic results
   test_tmm_api.py       shapes, validation, Result, substrate passes
-  test_requirements.py  requirements.txt in sync with pyproject.toml
 examples/               one script per physical situation (plotted with cjcplot), PNG next to it
-requirements.txt        the dependencies of pyproject.toml as a plain list
 THEORY.md               derivation, conventions, substrate-pass validity
 ```
 
@@ -94,16 +91,17 @@ THEORY.md               derivation, conventions, substrate-pass validity
 - Dependencies: numpy only.
 - The package (`src/cjctmm/`) and `tests/` never import cjcplot; only
   `examples/` may, via the `examples` extra pinned to a cjcplot release tag.
-  When upgrading the pin, change the tag in pyproject.toml (and the comment in
-  requirements.txt) and regenerate all example PNGs. Examples use cjcplot's
+  When upgrading the pin, change the tag in pyproject.toml and regenerate all
+  example PNGs. Examples use cjcplot's
   public API only and save their PNG with `save_path=..., fig_show=False`.
 - Python 3.10 compatible (no syntax newer than 3.10).
 
 ## Dependencies
 
-- `pyproject.toml` is the source of truth. `requirements.txt` lists the same
-  `[project] dependencies`; `tests/test_requirements.py` fails when they
-  drift apart, so change both in the same change.
+- All dependencies live in `pyproject.toml`, the only list: `[project]
+  dependencies` (numpy), the `test` extra (pytest) and the `examples` extra
+  (cjcplot, pinned). There is no `requirements.txt`; set up an environment
+  with `pip install -e ".[test,examples]"`.
 
 ## Tests
 

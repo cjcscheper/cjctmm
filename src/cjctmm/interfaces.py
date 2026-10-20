@@ -35,6 +35,11 @@ from cjctmm._constants import VACUUM_IMPEDANCE
 
 Polarization = Literal["s", "p"]
 
+# Refractive indices, cosines and angles: complex scalars or arrays. numpy's ArrayLike
+# already allows complex, but some type checkers (PyCharm) narrow it to float after a real
+# argument and then reject a complex one; naming complex explicitly avoids that.
+ComplexArrayLike = npt.ArrayLike | complex
+
 
 def _check_polarization(polarization: str) -> None:
     """Raise a clear error unless ``polarization`` is ``"s"`` or ``"p"``."""
@@ -45,8 +50,8 @@ def _check_polarization(polarization: str) -> None:
 
 
 def admittance(
-    n: npt.ArrayLike,
-    cos_theta: npt.ArrayLike,
+    n: ComplexArrayLike,
+    cos_theta: ComplexArrayLike,
     polarization: Polarization,
 ) -> npt.NDArray[np.complex128]:
     """
@@ -93,9 +98,9 @@ def admittance(
 
 
 def snell_cos_theta(
-    n_inc: npt.ArrayLike,
-    n: npt.ArrayLike,
-    theta_inc: npt.ArrayLike,
+    n_inc: ComplexArrayLike,
+    n: ComplexArrayLike,
+    theta_inc: ComplexArrayLike,
 ) -> npt.NDArray[np.complex128]:
     """
     Cosine of the propagation angle in a medium, from Snell's law.
@@ -169,9 +174,9 @@ def snell_cos_theta(
 
 
 def snell_theta(
-    n_inc: npt.ArrayLike,
-    n: npt.ArrayLike,
-    theta_inc: npt.ArrayLike,
+    n_inc: ComplexArrayLike,
+    n: ComplexArrayLike,
+    theta_inc: ComplexArrayLike,
 ) -> npt.NDArray[np.complex128]:
     """
     Complex propagation angle in a medium, from Snell's law.
@@ -314,26 +319,10 @@ def _t_from_tangential(
     return t_tangential * cos_theta_inc / cos_theta_exit
 
 
-def _interface_admittances(
-    n_1: npt.ArrayLike,
-    n_2: npt.ArrayLike,
-    theta_inc: npt.ArrayLike,
-    polarization: Polarization,
-) -> tuple[npt.NDArray[np.complex128], ...]:
-    """Cosines and admittances on both sides of an interface, shared by the Fresnel functions."""
-    # Validate here, so every Fresnel function reports a bad polarization the same way.
-    _check_polarization(polarization)
-
-    # Snell's law on both sides; the incident side reproduces cos(theta_inc).
-    cos_1 = snell_cos_theta(n_1, n_1, theta_inc)
-    cos_2 = snell_cos_theta(n_1, n_2, theta_inc)
-    return cos_1, cos_2, admittance(n_1, cos_1, polarization), admittance(n_2, cos_2, polarization)
-
-
 def fresnel_r(
-    n_1: npt.ArrayLike,
-    n_2: npt.ArrayLike,
-    theta_inc: npt.ArrayLike,
+    n_1: ComplexArrayLike,
+    n_2: ComplexArrayLike,
+    theta_inc: ComplexArrayLike,
     polarization: Polarization = "s",
 ) -> npt.NDArray[np.complex128]:
     """
@@ -364,15 +353,18 @@ def fresnel_r(
     use ``-fresnel_r(..., polarization="p")``.
     """
 
+    # Admittances on both sides, from Snell's law (the incident side reproduces cos(theta_inc)).
+    eta_1 = admittance(n_1, snell_cos_theta(n_1, n_1, theta_inc), polarization)
+    eta_2 = admittance(n_2, snell_cos_theta(n_1, n_2, theta_inc), polarization)
+
     # The tangential ratio from admittances, converted to the textbook coefficient.
-    _, _, eta_1, eta_2 = _interface_admittances(n_1, n_2, theta_inc, polarization)
     return _r_from_tangential(_tangential_r(eta_1, eta_2), polarization)
 
 
 def fresnel_t(
-    n_1: npt.ArrayLike,
-    n_2: npt.ArrayLike,
-    theta_inc: npt.ArrayLike,
+    n_1: ComplexArrayLike,
+    n_2: ComplexArrayLike,
+    theta_inc: ComplexArrayLike,
     polarization: Polarization = "s",
 ) -> npt.NDArray[np.complex128]:
     """
@@ -402,15 +394,20 @@ def fresnel_t(
     so ``t_p`` carries the extra factor ``cos1/cos2``.
     """
 
+    # Cosines and admittances on both sides, from Snell's law.
+    cos_1 = snell_cos_theta(n_1, n_1, theta_inc)
+    cos_2 = snell_cos_theta(n_1, n_2, theta_inc)
+    eta_1 = admittance(n_1, cos_1, polarization)
+    eta_2 = admittance(n_2, cos_2, polarization)
+
     # The tangential ratio from admittances, converted to the full-field coefficient.
-    cos_1, cos_2, eta_1, eta_2 = _interface_admittances(n_1, n_2, theta_inc, polarization)
     return _t_from_tangential(_tangential_t(eta_1, eta_2), cos_1, cos_2, polarization)
 
 
 def fresnel_R(
-    n_1: npt.ArrayLike,
-    n_2: npt.ArrayLike,
-    theta_inc: npt.ArrayLike,
+    n_1: ComplexArrayLike,
+    n_2: ComplexArrayLike,
+    theta_inc: ComplexArrayLike,
     polarization: Polarization = "s",
 ) -> npt.NDArray[np.float64]:
     """
@@ -432,9 +429,9 @@ def fresnel_R(
 
 
 def fresnel_T(
-    n_1: npt.ArrayLike,
-    n_2: npt.ArrayLike,
-    theta_inc: npt.ArrayLike,
+    n_1: ComplexArrayLike,
+    n_2: ComplexArrayLike,
+    theta_inc: ComplexArrayLike,
     polarization: Polarization = "s",
 ) -> npt.NDArray[np.float64]:
     """
@@ -459,6 +456,9 @@ def fresnel_T(
     Beyond the critical angle ``eta_2`` is purely imaginary and ``T = 0``.
     """
 
+    # Admittances on both sides, from Snell's law.
+    eta_1 = admittance(n_1, snell_cos_theta(n_1, n_1, theta_inc), polarization)
+    eta_2 = admittance(n_2, snell_cos_theta(n_1, n_2, theta_inc), polarization)
+
     # Power flow normal to the interface on each side, from the tangential fields.
-    _, _, eta_1, eta_2 = _interface_admittances(n_1, n_2, theta_inc, polarization)
     return np.real(eta_2) / np.real(eta_1) * np.abs(_tangential_t(eta_1, eta_2)) ** 2

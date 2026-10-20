@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from cjctmm import (
+    Polarization,
     SPEED_OF_LIGHT,
     VACUUM_IMPEDANCE,
     VACUUM_PERMITTIVITY,
@@ -14,6 +15,9 @@ from cjctmm import (
     solve_tmm,
 )
 
+# Both polarizations, typed as Polarization so type checkers accept them where "s" or "p" is expected.
+POLARIZATIONS: tuple[Polarization, ...] = ("s", "p")
+
 NAN = np.nan
 N_GLASS = 1.5
 
@@ -22,9 +26,9 @@ WAVELENGTH = 550e-9
 OMEGA = np.array([2 * np.pi * SPEED_OF_LIGHT / WAVELENGTH])
 
 
-@pytest.mark.parametrize("polarization", ["s", "p"])
+@pytest.mark.parametrize("polarization", POLARIZATIONS)
 @pytest.mark.parametrize("n_exit", [N_GLASS, 3.4 + 0.2j, 0.3 + 4.0j])
-def test_single_interface_equals_fresnel(polarization, n_exit):
+def test_single_interface_equals_fresnel(polarization: Polarization, n_exit):
     """A stack of just two semi-infinite media gives exactly the Fresnel coefficients."""
     for theta in np.radians([0.0, 30.0, 70.0]):
         result = solve_tmm(OMEGA, [NAN, NAN], [1.0, n_exit], polarization=polarization, theta_inc=theta)
@@ -35,13 +39,13 @@ def test_single_interface_equals_fresnel(polarization, n_exit):
 def test_total_internal_reflection_in_a_stack():
     """Glass into air beyond the critical angle: R = 1 and T = 0, also through a thin film."""
     theta = np.radians(50.0)
-    for polarization in ("s", "p"):
+    for polarization in POLARIZATIONS:
         result = solve_tmm(OMEGA, [NAN, 100e-9, NAN], [N_GLASS, 1.3, 1.0], polarization=polarization, theta_inc=theta)
         assert np.isclose(result.R[0], 1.0) and np.isclose(result.T[0], 0.0, atol=1e-15)
 
 
-@pytest.mark.parametrize("polarization", ["s", "p"])
-def test_lossless_stack_conserves_energy(polarization):
+@pytest.mark.parametrize("polarization", POLARIZATIONS)
+def test_lossless_stack_conserves_energy(polarization: Polarization):
     """R + T = 1 for a lossless multilayer at many frequencies and angles."""
     omega = np.linspace(0.5, 2.0, 50) * OMEGA[0]
     thickness = [NAN, 80e-9, 230e-9, 1.1e-6, NAN]
@@ -57,7 +61,7 @@ def test_absorbing_stack_has_non_negative_absorptance():
     omega = np.linspace(0.5, 2.0, 50) * OMEGA[0]
     thickness = [NAN, 30e-9, 200e-9, NAN]
     n = [1.0, 0.2 + 3.0j, 2.0 + 0.1j, N_GLASS]
-    for polarization in ("s", "p"):
+    for polarization in POLARIZATIONS:
         for theta in np.radians([0.0, 40.0, 80.0]):
             result = solve_tmm(omega, thickness, n, polarization=polarization, theta_inc=theta)
             assert np.all(result.A > 0.0)
@@ -77,8 +81,8 @@ def test_normal_incidence_s_and_p_agree():
     assert np.allclose(p.r, -s.r, rtol=1e-14, atol=0)
 
 
-@pytest.mark.parametrize("polarization", ["s", "p"])
-def test_zero_thickness_layer_has_no_effect(polarization):
+@pytest.mark.parametrize("polarization", POLARIZATIONS)
+def test_zero_thickness_layer_has_no_effect(polarization: Polarization):
     """A layer of zero thickness, whatever its index, changes nothing."""
     omega = np.linspace(0.5, 2.0, 20) * OMEGA[0]
     theta = np.radians(35.0)
@@ -89,8 +93,8 @@ def test_zero_thickness_layer_has_no_effect(polarization):
     assert np.allclose(extra.r, bare.r, rtol=1e-13) and np.allclose(extra.t, bare.t, rtol=1e-13)
 
 
-@pytest.mark.parametrize("polarization", ["s", "p"])
-def test_index_matched_layers(polarization):
+@pytest.mark.parametrize("polarization", POLARIZATIONS)
+def test_index_matched_layers(polarization: Polarization):
     """Splitting a layer into two of the same index changes nothing; an incident-matched layer only adds phase."""
     omega = np.linspace(0.5, 2.0, 20) * OMEGA[0]
     theta = np.radians(35.0)
@@ -115,8 +119,8 @@ def test_index_matched_layers(polarization):
     assert np.allclose(shifted.R, bare.R, rtol=1e-13)
 
 
-@pytest.mark.parametrize("polarization", ["s", "p"])
-def test_thin_film_equals_airy_formula(polarization):
+@pytest.mark.parametrize("polarization", POLARIZATIONS)
+def test_thin_film_equals_airy_formula(polarization: Polarization):
     """One absorbing film at oblique incidence equals the Airy sum built from Fresnel coefficients."""
     omega = np.linspace(0.5, 2.0, 40) * OMEGA[0]
     n_1, n_2, n_3 = 1.0, 2.0 + 0.1j, N_GLASS
@@ -162,13 +166,13 @@ def test_half_wave_layer_is_absent():
 
 @pytest.mark.parametrize("theta_deg", [0.0, 30.0])
 def test_fabry_perot_slab_transmits_fully_at_resonance(theta_deg):
-    """A free-standing lossless slab has T = 1 where 2 n d cos(theta) = m * wavelength."""
+    """A freestanding lossless slab has T = 1 where 2 n d cos(theta) = m * wavelength."""
     n_slab, d = 3.4, 500e-6
     theta = np.radians(theta_deg)
     cos_slab = np.sqrt(1 - (np.sin(theta) / n_slab) ** 2)
     m = np.arange(1, 6)
     omega_resonance = 2 * np.pi * m * SPEED_OF_LIGHT / (2 * n_slab * d * cos_slab)
-    for polarization in ("s", "p"):
+    for polarization in POLARIZATIONS:
         result = solve_tmm(omega_resonance, [NAN, d, NAN], [1.0, n_slab, 1.0], polarization=polarization, theta_inc=theta)
         assert np.allclose(result.T, 1.0)
 

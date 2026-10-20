@@ -5,6 +5,10 @@ fixes, minor for new features, major for changes that break existing scripts.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-20
+
+First release.
+
 ### Added
 - `solve_tmm(omega, layer_thickness, layer_n, ...)`: transfer-matrix method for
   planar multilayer stacks, s and p polarization at oblique incidence, absorbing
@@ -18,9 +22,7 @@ fixes, minor for new features, major for changes that break existing scripts.
 - Physical constants `SPEED_OF_LIGHT`, `VACUUM_PERMEABILITY`,
   `VACUUM_PERMITTIVITY`, `VACUUM_IMPEDANCE`.
 - THEORY.md (derivation, conventions, substrate-pass validity), examples
-  (antireflection coating, Fabry–Pérot slab, angle dependence, thin conducting
-  film), tests and a GitHub Actions workflow.
+  (antireflection coating, Fabry–Pérot slab, angle dependence), tests and a
+  GitHub Actions workflow.
 - `examples` extra installing cjcplot pinned to `v0.2.0`; the examples plot
   with cjcplot. `pip install cjctmm` itself stays numpy-only.
-- `requirements.txt` with the dependencies of `pyproject.toml`, and a test that
-  keeps them in sync.

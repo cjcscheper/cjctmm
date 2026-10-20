@@ -6,7 +6,10 @@ import warnings
 import numpy as np
 import pytest
 
-from cjctmm import SPEED_OF_LIGHT, Result, fresnel_r, fresnel_t, propagation_phase, solve_tmm
+from cjctmm import SPEED_OF_LIGHT, Polarization, Result, fresnel_r, fresnel_t, propagation_phase, solve_tmm
+
+# Both polarizations, typed as Polarization so type checkers accept them where "s" or "p" is expected.
+POLARIZATIONS: tuple[Polarization, ...] = ("s", "p")
 
 NAN = np.nan
 
@@ -41,8 +44,9 @@ def test_scalar_omega_is_accepted():
 def test_result_is_frozen():
     """Result fields cannot be reassigned."""
     result = solve_tmm(OMEGA, THICKNESS, N_LAYERS)
+    # setattr instead of result.R = ...: the write is meant to fail, and this way the IDE does not flag it.
     with pytest.raises(dataclasses.FrozenInstanceError):
-        result.R = np.zeros(5)
+        setattr(result, "R", np.zeros(5))
 
 
 def test_conjugate_model_conjugates_r_and_t_only():
@@ -66,9 +70,12 @@ def test_propagation_phase_value():
 
 def test_polarization_is_validated():
     """Only 's' and 'p' are accepted, with a message naming both."""
+    # The wrong types are the point of this test, so the type-checker warnings are silenced.
     with pytest.raises(ValueError, match=r"polarization must be 's' \(senkrecht, TE\) or 'p'"):
+        # noinspection PyTypeChecker
         solve_tmm(OMEGA, THICKNESS, N_LAYERS, polarization="TE")
     with pytest.raises(ValueError, match="polarization must be"):
+        # noinspection PyTypeChecker
         solve_tmm(OMEGA, THICKNESS, N_LAYERS, polarization=1)
 
 
@@ -120,8 +127,8 @@ def test_single_pass_is_the_direct_pulse():
     assert np.allclose(result.r, fresnel_r(1.0, n_sub, 0.0))
 
 
-@pytest.mark.parametrize("polarization", ["s", "p"])
-def test_many_passes_converge_to_coherent_result(polarization):
+@pytest.mark.parametrize("polarization", POLARIZATIONS)
+def test_many_passes_converge_to_coherent_result(polarization: Polarization):
     """For an absorbing substrate the echoes die out, so many passes equal the fully coherent result."""
     thickness = [NAN, 200e-9, 500e-6, NAN]
     n = [1.0, 2.0 + 0.5j, 3.4 + 0.05j, 1.0]

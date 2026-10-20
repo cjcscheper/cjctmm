@@ -348,4 +348,4 @@ does not implement it.
   sign convention) and 9.7 (thin films, multilayers).
 - M. Tinkham, "Energy gap interpretation of experiments on infrared
   transmission through superconducting films", Phys. Rev. **104**, 845 (1956):
-  the thin-film transmission formula used in the tests and the examples.
+  the thin-film transmission formula used in the tests.

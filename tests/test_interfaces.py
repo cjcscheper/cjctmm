@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from cjctmm import (
+    Polarization,
     VACUUM_IMPEDANCE,
     admittance,
     brewster_angle,
@@ -15,6 +16,9 @@ from cjctmm import (
     snell_cos_theta,
     snell_theta,
 )
+
+# Both polarizations, typed as Polarization so type checkers accept them where "s" or "p" is expected.
+POLARIZATIONS: tuple[Polarization, ...] = ("s", "p")
 
 # Glass, the standard simple value for hand calculations.
 N_GLASS = 1.5
@@ -38,7 +42,7 @@ def test_critical_angle_glass_to_air_and_total_internal_reflection():
     theta = theta_c + np.radians(5.0)
     cos_t = snell_cos_theta(N_GLASS, 1.0, theta)
     assert abs(cos_t.real) < 1e-15 and cos_t.imag > 0.0
-    for polarization in ("s", "p"):
+    for polarization in POLARIZATIONS:
         assert np.isclose(fresnel_R(N_GLASS, 1.0, theta, polarization), 1.0)
         assert np.isclose(fresnel_T(N_GLASS, 1.0, theta, polarization), 0.0)
 
@@ -87,7 +91,7 @@ def test_fresnel_air_to_glass_at_normal_incidence():
     """Air to glass at normal incidence: r_s = -0.2, r_p = +0.2, t = 0.8, R = 0.04, T = 0.96."""
     assert np.isclose(fresnel_r(1.0, N_GLASS, 0.0, "s"), -0.2)
     assert np.isclose(fresnel_r(1.0, N_GLASS, 0.0, "p"), +0.2)
-    for polarization in ("s", "p"):
+    for polarization in POLARIZATIONS:
         assert np.isclose(fresnel_t(1.0, N_GLASS, 0.0, polarization), 0.8)
         assert np.isclose(fresnel_R(1.0, N_GLASS, 0.0, polarization), 0.04)
         assert np.isclose(fresnel_T(1.0, N_GLASS, 0.0, polarization), 0.96)
@@ -122,8 +126,8 @@ def test_fresnel_textbook_closed_forms():
     assert np.isclose(fresnel_t(n_1, n_2, theta, "p"), 2 * n_1 * cos_1 / (n_2 * cos_1 + n_1 * cos_2))
 
 
-@pytest.mark.parametrize("polarization", ["s", "p"])
-def test_fresnel_energy_conservation_lossless(polarization):
+@pytest.mark.parametrize("polarization", POLARIZATIONS)
+def test_fresnel_energy_conservation_lossless(polarization: Polarization):
     """R + T = 1 at a lossless interface, from both sides, below the critical angle."""
     theta = np.radians(np.linspace(0.0, 85.0, 18))
     assert np.allclose(fresnel_R(1.0, N_GLASS, theta, polarization) + fresnel_T(1.0, N_GLASS, theta, polarization), 1.0)
@@ -133,9 +137,12 @@ def test_fresnel_energy_conservation_lossless(polarization):
 
 def test_fresnel_rejects_unknown_polarization():
     """Anything but 's' or 'p' (e.g. 'P' or the old integer 0) raises a clear error."""
+    # The wrong types are the point of this test, so the type-checker warnings are silenced.
     with pytest.raises(ValueError, match="polarization must be 's'"):
+        # noinspection PyTypeChecker
         fresnel_r(1.0, N_GLASS, 0.0, "P")
     with pytest.raises(ValueError, match="polarization must be 's'"):
+        # noinspection PyTypeChecker
         fresnel_t(1.0, N_GLASS, 0.0, 0)
 
 
@@ -187,12 +194,12 @@ def boundary_condition_coefficients(n_1, n_2, theta_inc, polarization):
     return r, t
 
 
-@pytest.mark.parametrize("polarization", ["s", "p"])
+@pytest.mark.parametrize("polarization", POLARIZATIONS)
 @pytest.mark.parametrize(
     "n_1, n_2",
     [(1.0, 1.5), (1.5, 1.0), (1.0, 3.4 + 0.2j), (1.0, 0.3 + 4.0j), (1.3 + 0.1j, 2.0 + 0.5j)],
 )
-def test_fresnel_matches_boundary_conditions(polarization, n_1, n_2):
+def test_fresnel_matches_boundary_conditions(polarization: Polarization, n_1, n_2):
     """The package's r and t equal a direct solve of tangential E and H continuity, at many angles."""
     for theta in np.radians([0.0, 20.0, 45.0, 60.0, 80.0]):
         r, t = boundary_condition_coefficients(n_1, n_2, theta, polarization)

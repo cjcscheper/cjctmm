@@ -67,6 +67,7 @@ import numpy.typing as npt
 
 from cjctmm._constants import SPEED_OF_LIGHT
 from cjctmm.interfaces import (
+    ComplexArrayLike,
     Polarization,
     _check_polarization,
     _r_from_tangential,
@@ -119,9 +120,9 @@ class Result:
 
 def propagation_phase(
     omega: npt.ArrayLike,
-    n: npt.ArrayLike,
+    n: ComplexArrayLike,
     d: npt.ArrayLike,
-    cos_theta: npt.ArrayLike,
+    cos_theta: ComplexArrayLike,
 ) -> npt.NDArray[np.complex128]:
     """
     Phase thickness of a layer, ``delta = (omega/c) n d cos(theta)``.
@@ -153,14 +154,17 @@ def propagation_phase(
     (with the phase index; dispersion makes the group delay differ).
     """
 
-    # Vacuum wavenumber times the normal component of n*k_hat, times thickness.
+    # Normal component of n*k_hat times the vacuum wavenumber, times thickness. The result is
+    # already complex; astype (no copy) only states that for type checkers, which infer the
+    # type of a numpy product from its float factors.
     k0 = np.asarray(omega, dtype=np.float64) / SPEED_OF_LIGHT
-    return (
-        k0
-        * np.asarray(n, dtype=np.complex128)
-        * np.asarray(d, dtype=np.float64)
+    delta = (
+        np.asarray(n, dtype=np.complex128)
         * np.asarray(cos_theta, dtype=np.complex128)
+        * k0
+        * np.asarray(d, dtype=np.float64)
     )
+    return delta.astype(np.complex128, copy=False)
 
 
 def _clamp_imag_phase(delta: npt.NDArray[np.complex128]) -> npt.NDArray[np.complex128]:
@@ -253,7 +257,7 @@ def _tangential_r_t_from_matrix(
 def _validate_inputs(
     omega: npt.ArrayLike,
     layer_thickness: npt.ArrayLike,
-    layer_n: npt.ArrayLike,
+    layer_n: ComplexArrayLike,
     polarization: str,
     theta_inc: float,
     num_substrate_passes: int | None,
@@ -398,7 +402,7 @@ def _substrate_pass_error(
 def solve_tmm(
     omega: npt.ArrayLike,
     layer_thickness: npt.ArrayLike,
-    layer_n: npt.ArrayLike,
+    layer_n: ComplexArrayLike,
     *,
     polarization: Polarization = "s",
     theta_inc: float = 0.0,

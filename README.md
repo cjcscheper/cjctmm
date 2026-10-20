@@ -1,6 +1,7 @@
 # cjctmm
 
 [![tests](https://github.com/cjcscheper/cjctmm/actions/workflows/tests.yml/badge.svg)](https://github.com/cjcscheper/cjctmm/actions/workflows/tests.yml)
+[![release](https://img.shields.io/github/v/release/cjcscheper/cjctmm)](https://github.com/cjcscheper/cjctmm/releases)
 
 Transfer-matrix method (TMM) for multilayer optics: give the frequencies, the
 layer thicknesses and the complex refractive indices of a planar stack, and get
@@ -37,13 +38,6 @@ For development, clone the repository and install it editable:
 
 ```bash
 pip install -e ".[test]"
-```
-
-`requirements.txt` lists the dependencies on their own, e.g. to set up a
-virtual environment or a PyCharm interpreter:
-
-```bash
-pip install -r requirements.txt
 ```
 
 ## Quick start
@@ -154,21 +148,17 @@ or, in a clone, `pip install -e ".[examples]"`. The extra pins cjcplot to a
 release tag (now `v0.2.0`), so the figures keep looking the same when cjcplot
 changes.
 
-<p align="center">
-  <img src="examples/example_antireflection_coating.png" alt="quarter-wave antireflection coating" width="480">
-</p>
-<p align="center">
-  <img src="examples/example_fabry_perot.png" alt="Fabry-Perot slab" width="480">
-</p>
-<p align="center">
-  <img src="examples/example_angle_dependence_air_to_glass.png" alt="R_s and R_p versus angle, air to glass" width="480">
-</p>
-<p align="center">
-  <img src="examples/example_angle_dependence_glass_to_air.png" alt="R_s and R_p versus angle, glass to air" width="480">
-</p>
-<p align="center">
-  <img src="examples/example_thin_conducting_film.png" alt="thin conducting film" width="480">
-</p>
+<!-- 2x2 grid; widths = fig_aspect_ratio[0] x 640 px, so all fonts appear at the same size. -->
+<table align="center">
+  <tr>
+    <td><img src="examples/example_antireflection_coating.png" alt="quarter-wave antireflection coating" width="320"></td>
+    <td><img src="examples/example_fabry_perot.png" alt="Fabry-Perot slab" width="320"></td>
+  </tr>
+  <tr>
+    <td><img src="examples/example_angle_dependence_air_to_glass.png" alt="R_s and R_p versus angle, air to glass" width="320"></td>
+    <td><img src="examples/example_angle_dependence_glass_to_air.png" alt="R_s and R_p versus angle, glass to air" width="320"></td>
+  </tr>
+</table>
 
 ## License
 
