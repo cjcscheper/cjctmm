@@ -151,31 +151,30 @@ changes.
 
 <!-- widths = fig_aspect_ratio[0] x 640 px, so all fonts appear at the same size. -->
 
-### Antireflection coating — `example_antireflection_coating.py`
+### Antireflection coating
 
-Bare glass reflects about 4 %; a quarter-wave layer of index sqrt(n_glass),
-designed for 550 nm, brings the reflectance to zero there.
+An antireflection coating designed for 550 nm brings the reflectance of
+glass down around that wavelength.
 
 <p align="center">
   <img src="examples/example_antireflection_coating.png" alt="quarter-wave antireflection coating" width="320">
 </p>
 
-### Fabry–Pérot slab — `example_fabry_perot.py`
+### Fabry–Pérot slab
 
-A freestanding 200 µm slab with n = 3.4: with all echoes it transmits fully
-wherever 2nd is a whole number of wavelengths (every c/(2nd) ≈ 0.22 THz);
-with only the direct pass (`num_substrate_passes=1`, as a time window would
-give) the fringes are gone and T is flat at (1 − R)² ≈ 0.49.
+A freestanding slab transmits fully at its Fabry–Pérot resonances. A time
+window (`num_substrate_passes=1`) removes the echoes and with them the
+fringes: T is then flat at (1 − R)².
 
 <p align="center">
   <img src="examples/example_fabry_perot.png" alt="Fabry-Perot slab" width="320">
 </p>
 
-### Angle dependence — `example_angle_dependence.py`
+### Angle dependence
 
-R_s and R_p versus the angle of incidence. From air into glass (left) R_p
-vanishes at the Brewster angle; from glass into air (right) both reach 1 at
-the critical angle (total internal reflection).
+The reflectance of s and p polarisation versus the angle of incidence: R_p
+vanishes at the Brewster angle (air into glass, left), and beyond the
+critical angle all light is reflected (glass into air, right).
 
 <table align="center">
   <tr>
