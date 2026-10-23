@@ -149,12 +149,35 @@ or, in a clone, `pip install -e ".[examples]"`. The extra pins cjcplot to a
 release tag (now `v0.2.0`), so the figures keep looking the same when cjcplot
 changes.
 
-<!-- 2x2 grid; widths = fig_aspect_ratio[0] x 640 px, so all fonts appear at the same size. -->
+<!-- widths = fig_aspect_ratio[0] x 640 px, so all fonts appear at the same size. -->
+
+### Antireflection coating — `example_antireflection_coating.py`
+
+Bare glass reflects about 4 %; a quarter-wave layer of index sqrt(n_glass),
+designed for 550 nm, brings the reflectance to zero there.
+
+<p align="center">
+  <img src="examples/example_antireflection_coating.png" alt="quarter-wave antireflection coating" width="320">
+</p>
+
+### Fabry–Pérot slab — `example_fabry_perot.py`
+
+A freestanding 200 µm slab with n = 3.4: with all echoes it transmits fully
+wherever 2nd is a whole number of wavelengths (every c/(2nd) ≈ 0.22 THz);
+with only the direct pass (`num_substrate_passes=1`, as a time window would
+give) the fringes are gone and T is flat at (1 − R)² ≈ 0.49.
+
+<p align="center">
+  <img src="examples/example_fabry_perot.png" alt="Fabry-Perot slab" width="320">
+</p>
+
+### Angle dependence — `example_angle_dependence.py`
+
+R_s and R_p versus the angle of incidence. From air into glass (left) R_p
+vanishes at the Brewster angle; from glass into air (right) both reach 1 at
+the critical angle (total internal reflection).
+
 <table align="center">
-  <tr>
-    <td><img src="examples/example_antireflection_coating.png" alt="quarter-wave antireflection coating" width="320"></td>
-    <td><img src="examples/example_fabry_perot.png" alt="Fabry-Perot slab" width="320"></td>
-  </tr>
   <tr>
     <td><img src="examples/example_angle_dependence_air_to_glass.png" alt="R_s and R_p versus angle, air to glass" width="320"></td>
     <td><img src="examples/example_angle_dependence_glass_to_air.png" alt="R_s and R_p versus angle, glass to air" width="320"></td>
